@@ -1,0 +1,25 @@
+npm install react-native-safe-area-context 
+
+npx expo start -c 
+npx expo lint 
+npx expo install -- --save-dev prettier eslint-config-prettier eslint-plugin-prettier
+
+
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        headerShown = false //means hide the default header in that it appear in top of the screen
+
+
+
+const Home = () => {
+  return <Redirect href="/(auth)/welcome"></Redirect>
+}
+
+
+
+npm install react-native-swiper
+npx expo install react-dom react-native-web @expo/metro-runtime
+npm install expo-secure-store
+npm install react-native-modal 
+
+npm install expo-local-authentication  
+
