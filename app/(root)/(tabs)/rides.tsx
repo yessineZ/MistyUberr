@@ -9,4 +9,4 @@ const rides = () => {
   )
 }
 
-export default rides
+export default rides 
