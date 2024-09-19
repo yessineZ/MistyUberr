@@ -17,6 +17,8 @@ const InputField = ({label , labelStyle , icon , secureTextEntry = false ,contai
                     className={`rounded-full p-4 font-JakartaSemiBold text-[15px] flex-1 ${inputStyle} text-left` }
                     {...props}
                 />
+
+                
             </View>
         </View>
         </TouchableWithoutFeedback>

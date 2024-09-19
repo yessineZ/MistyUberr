@@ -7,15 +7,42 @@ import { icons, images } from '@/constants';
 import InputField from './components/InputField';
 import CustomButton from './components/customButton';
 import OAuth from './components/OAuth';
+import { useRouter } from 'expo-router';
+import { useSignIn } from '@clerk/clerk-expo';
+
 const SignUp = () => {
+
+  const { signIn, setActive, isLoaded } = useSignIn() ; 
+   const router = useRouter() ;
+
   const [form, setForm] = useState({
     email: '',
     password: '',
   });
 
-  const onSignInPress = () => {
+   const onSignInPress = React.useCallback(async () => {
+    if (!isLoaded) {
+      return
+    }
 
-  }
+    try {
+      const signInAttempt = await signIn.create({
+        identifier: form.email,
+        password : form.password,
+      })
+
+      if (signInAttempt.status === 'complete') {
+        await setActive({ session: signInAttempt.createdSessionId })
+        router.replace('/(root)/(tabs)/home');
+      } else {
+        // See https://clerk.com/docs/custom-flows/error-handling
+        // for more info on error handling
+        console.error(JSON.stringify(signInAttempt, null, 2)) ; 
+      }
+    } catch (err: any) {
+      console.error(JSON.stringify(err, null, 2))
+    }
+  }, [isLoaded, form.email, form.password])
 
   return (
     <ScrollView className='flex-1 bg-white'>
