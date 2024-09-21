@@ -24,7 +24,7 @@ npm install react-native-modal
 npm install expo-local-authentication  
 
 
-
+npm install react-native-google-places-autocomplete
 
 
 
