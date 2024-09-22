@@ -38,6 +38,9 @@ npm install react-native-google-places-autocomplete
     </div>
 
 
+    npm i @gorhom/bottom-sheet  
+
+
 
 
 

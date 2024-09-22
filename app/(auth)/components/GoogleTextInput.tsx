@@ -35,7 +35,6 @@ const GoogleTextInput = ({
             fontSize: 16,
             fontWeight: '600',
             marginTop: 5,
-            fontFamily: 'Poppins-Regular',
           },
           listView: {
             backgroundColor: textInputBackgroundColor || '#ffffff',
@@ -60,7 +59,7 @@ const GoogleTextInput = ({
         }}
         query={{
           key: GooglePlacesApiKey,
-          language: 'ar', // Adjust the language if necessary
+          language: 'en', 
         }}
         renderLeftButton={() => (
           <View>

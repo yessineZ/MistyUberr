@@ -5,6 +5,7 @@ import { useDriverStore, useLocationStore } from '@/app/store';
 import { calculateRegion, generateMarkersFromData } from '@/lib/map';
 import { MarkerData } from '@/types/type';
 import { icons } from '@/constants';
+
 const Map = () => {
   const drivers = [
     {
@@ -43,38 +44,40 @@ const Map = () => {
         "car_seats": 4,
         "rating": "4.90"
     }
-]
-  const { userLongitude , userLatitude , destinationLatitude , destinationLongitude } = useLocationStore() ; 
-  const [markers,setMarkers] = useState<MarkerData[]>([]) ;
-  const { selectedDriver} = useDriverStore() ; 
+  ];
+  const { setDrivers} = useDriverStore() ; 
+  const { userLongitude, userLatitude, destinationLatitude, destinationLongitude } = useLocationStore();
+  const [markers, setMarkers] = useState<MarkerData[]>([]);
+  const { selectedDriver } = useDriverStore();
   const region = calculateRegion({
-    userLatitude ,
-    userLongitude ,
+    userLatitude,
+    userLongitude,
     destinationLatitude,
-    destinationLongitude 
+    destinationLongitude
   });
+
   useEffect(() => {
-    if(Array.isArray(drivers)) {
-      if(!userLatitude || !userLongitude){
-        return ; 
-      }
+    setDrivers(drivers) ; 
+    if (Array.isArray(drivers) && userLatitude && userLongitude) {
       const newMarkers = generateMarkersFromData({
-        data : drivers , 
-        userLatitude , 
-        userLongitude 
+        data: drivers,
+        userLatitude,
+        userLongitude
       });
-      setMarkers(newMarkers);
-      
+      setMarkers(newMarkers); // Update markers only if they change
     }
-  },[drivers])
+  }, []);
+
   return (
-    <MapView provider={PROVIDER_DEFAULT} className='w-full h-full rounded-2xl'
-    tintColor='black'
-    mapType='mutedStandard'
-    showsPointsOfInterest={false}
-    initialRegion={region}
-    showsUserLocation={true}
-   userInterfaceStyle='light'
+    <MapView
+      provider={PROVIDER_DEFAULT}
+      className='w-full h-full rounded-2xl'
+      tintColor='black'
+      mapType='mutedStandard'
+      showsPointsOfInterest={false}
+      initialRegion={region}
+      showsUserLocation={true}
+      userInterfaceStyle='light'
     >
       {markers.map((marker) => {
         return (
@@ -85,16 +88,12 @@ const Map = () => {
               longitude: marker.longitude,
             }}
             title={marker.title}
-            image={selectedDriver === marker.id ? icons.selectedMarker : icons.marker }
-            
-
-          >
-          </Marker>
+            image={selectedDriver === marker.id ? icons.selectedMarker : icons.marker}
+          />
         );
-
       })}
     </MapView>
-  
-  )}
+  );
+};
 
-export default Map
+export default Map;
