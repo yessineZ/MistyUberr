@@ -1,4 +1,4 @@
-import { SignedIn, SignedOut, useUser } from '@clerk/clerk-expo';
+import { SignedIn, SignedOut, useAuth, useUser } from '@clerk/clerk-expo';
 import { Link, router } from 'expo-router';
 import { Image, Text, View, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,10 +10,14 @@ import Map from '@/app/(auth)/components/Map';
 import { useEffect, useState } from 'react';
 import * as Location from 'expo-location' ; 
 import { useLocationStore } from '@/app/store';
+import { useFetch } from '@/lib/fetch';
 export default function Page() {
   const { user } = useUser();
-  const loading = false;
-  const handleSignOut = () => {} ; 
+  const { signOut }= useAuth() ; 
+  const handleSignOut = () => {
+    signOut()  ;
+    router.replace('/(auth)/sign-in') ;
+  } ; 
 
   const {setUserLocation , setDestinationLocation} =  useLocationStore() ; 
   const [hasPermession,setHasPermession] = useState(false) ;
@@ -26,6 +30,8 @@ export default function Page() {
     setDestinationLocation(location)  ;
     router.push("/(root)/findRide") ;
   } ;
+
+  const { data : recentRides , loading } = useFetch(`/(api)/ride/${user?.id}`)
   
   
   useEffect(() => {
@@ -64,7 +70,7 @@ export default function Page() {
   return (
     <SafeAreaView>
       <FlatList
-        data={drivers?.slice(0, 5)}
+        data={recentRides?.slice(0, 5)}
         renderItem={({ item }) => <RideCard ride={item} />}
         className="px-5"
         keyboardShouldPersistTaps="handled"
@@ -85,7 +91,7 @@ export default function Page() {
           <>
           <View className='flex items-center justify-between flex-row my-5'>
             <Text className='font-JakartaBold text-xl'>Welcome , <Text className='text-green-500 capitalize'>{user?.firstName || user?.emailAddresses[0].emailAddress.split("@")[0]}</Text> </Text>
-            <TouchableOpacity className='justify-center items-center w-10 h-10  absolute right-0'>
+           <TouchableOpacity onPress={handleSignOut} className='justify-center items-center w-10 h-10  absolute right-0'>
               <Image source={icons.out} className='w-4 h-4'></Image>
             </TouchableOpacity>
           </View>

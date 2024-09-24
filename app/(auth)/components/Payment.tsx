@@ -4,37 +4,139 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 import { Alert, Image, Text, View } from "react-native";
 import { ReactNativeModal } from "react-native-modal";
+
 import CustomButton from "./customButton";
 import { images } from "@/constants";
 import { fetchAPI } from "@/lib/fetch";
-import { useLocationStore } from "@/app/store";
 import { PaymentProps } from "@/types/type";
+import { useLocationStore } from "@/app/store";
 
-const Payment = () => {
+const Payment = ({
+  fullName,
+  email,
+  amount,
+  driverId,
+  rideTime,
+}: PaymentProps) => {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
-  const [success,setSuccess] = useState<boolean>() ; 
+  const {
+    userAddress,
+    userLongitude,
+    userLatitude,
+    destinationLatitude,
+    destinationAddress,
+    destinationLongitude,
+  } = useLocationStore();
 
-  const initializePaymentSheet  = async () => {
-    const { error } = await initPaymentSheet({
-      merchantDisplayName : "Exemple " , 
-      intentConfiguration : {
-        mode : {
-          amount  : 1099 , 
-          currencyCode : "USD"
-        },
-        confirmHandler : confirmHandler ,
-      }
-    })
-  }
-    
-  const confirmHandler = () => {
-
-  }
+  const { userId } = useAuth();
+  const [success, setSuccess] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const openPaymentSheet = async () => {
     await initializePaymentSheet();
-    await presentPaymentSheet();
+
+    const { error } = await presentPaymentSheet();
+
+    if (error) {
+      Alert.alert(`Error code: ${error.code}`, error.message);
+    } else {
+      setSuccess(true);
+    }
   };
+
+  const initializePaymentSheet = async () => {
+  setLoading(true); 
+
+  const { error } = await initPaymentSheet({
+    merchantDisplayName: "Example, Inc.",
+    intentConfiguration: {
+      mode: {
+        amount: parseInt(amount) * 100,
+        currencyCode: "usd",
+      },
+      confirmHandler: async (
+        paymentMethod,
+        shouldSavePaymentMethod,
+        intentCreationCallback,
+      ) => {
+        try {
+          const { paymentIntent, customer } = await fetchAPI(
+            "/(api)/(stripe)/create",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                name: fullName || email.split("@")[0],
+                email: email,
+                amount: amount,
+                paymentMethodId: paymentMethod.id,
+              }),
+            },
+          );
+
+          if (paymentIntent?.client_secret) {
+            const { result } = await fetchAPI("/(api)/(stripe)/pay", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                payment_method_id: paymentMethod.id,
+                payment_intent_id: paymentIntent.id,
+                customer_id: customer,
+                client_secret: paymentIntent.client_secret,
+              }),
+            });
+
+            if (result?.client_secret) {
+              await fetchAPI("/(api)/ride/create", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  origin_address: userAddress,
+                  destination_address: destinationAddress,
+                  origin_latitude: userLatitude,
+                  origin_longitude: userLongitude,
+                  destination_latitude: destinationLatitude,
+                  destination_longitude: destinationLongitude,
+                  ride_time: rideTime.toFixed(0),
+                  fare_price: parseInt(amount) * 100,
+                  payment_status: "paid",
+                  driver_id: driverId,
+                  user_id: userId,
+                }),
+              });
+
+              intentCreationCallback({
+                clientSecret: result.client_secret,
+              });
+            } else {
+              throw new Error("Payment secret not available");
+            }
+          } else {
+            throw new Error("Payment Intent creation failed");
+          }
+        } catch (error) {
+          Alert.alert("Payment Error", error.message);
+        } finally {
+          setLoading(false); // Stop loading when finished
+        }
+      },
+    },
+    returnURL: "myapp://book-ride",
+  });
+
+  if (!error) {
+    setLoading(false); 
+  } else {
+    Alert.alert("Payment Sheet Initialization Error", error.message);
+    setLoading(false);
+  }
+};
 
   return (
     <>

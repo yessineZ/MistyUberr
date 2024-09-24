@@ -20,9 +20,7 @@ const FindRide = () => {
             textInputBackgroundColor="#f5f5f5"
             handlePress={(location) => setUserLocation(location)}
             >
-
             </GoogleTextInput>
-
         </View>
 
 

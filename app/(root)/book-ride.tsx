@@ -8,13 +8,16 @@ import { icons } from "@/constants";
 import { formatTime } from "@/lib/utils";
 import { useLocationStore , useDriverStore } from "../store";
 const BookRide = () => {
+
   const { user } = useUser();
   const { userAddress, destinationAddress } = useLocationStore();
   const { drivers, selectedDriver } = useDriverStore();
-
+  
   const driverDetails = drivers?.filter(
     (driver) => +driver.id === selectedDriver,
   )[0];
+
+  console.log(driverDetails) ; 
 
   return (
     <StripeProvider
@@ -35,8 +38,8 @@ const BookRide = () => {
             />
 
             <View className="flex flex-row items-center justify-center mt-5 space-x-2">
-              <Text className="text-lg font-JakartaSemiBold">
-                {driverDetails?.title}
+              <Text className="text-lg text-center  font-JakartaSemiBold">
+                {driverDetails?.first_name}
               </Text>
 
               <View className="flex flex-row items-center space-x-0.5">

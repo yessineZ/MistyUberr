@@ -53,6 +53,7 @@ const Layout = () => {
             <Tabs.Screen name="chat" options={{
                 title : 'Chat',
                 tabBarIcon : ({ focused }) => <TabIcon focused={focused} source={icons.chat}
+                
                 /> 
             }}
             />

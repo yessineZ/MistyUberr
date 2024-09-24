@@ -7,7 +7,7 @@ import { useDriverStore } from "../store";
 const ConfirmRide = () => {
     const { drivers , selectedDriver , setSelectedDriver } = useDriverStore() ; 
    
-
+    console.log(drivers + "selected: " + selectedDriver) ;
     return (
         <RideLayout title="Choose a Driver" snapPoints={['65%','85%']}>
             <FlatList data={drivers} renderItem={({item}) => (
@@ -22,8 +22,6 @@ const ConfirmRide = () => {
                     title="Select Ride"
                     onPress={() => router.push('/(root)/book-ride')}
                     >
-                
-
                     </CustomButton>
 
                 </View>

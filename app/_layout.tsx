@@ -7,9 +7,10 @@ import 'react-native-reanimated';
 import { ClerkProvider, ClerkLoaded } from '@clerk/clerk-expo';
 import { Slot } from 'expo-router';
 import { tokenCache } from '@/lib/auth';
-
+import { LogBox } from 'react-native';
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+LogBox.ignoreLogs(['Clerk :']) ; 
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ;
 console.log(publishableKey) ; 

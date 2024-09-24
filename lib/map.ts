@@ -24,98 +24,102 @@ export const generateMarkersFromData = ({
     });
 };
 
-export const calculateRegion = ({
-                                    userLatitude,
-                                    userLongitude,
-                                    destinationLatitude,
-                                    destinationLongitude,
-                                }: {
-    userLatitude: number | null;
-    userLongitude: number | null;
-    destinationLatitude?: number | null;
-    destinationLongitude?: number | null;
-}) => {
-    if (!userLatitude || !userLongitude) {
-        return {
-            latitude: 37.78825,
-            longitude: -122.4324,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-        };
-    }
-
-    if (!destinationLatitude || !destinationLongitude) {
-        return {
-            latitude: userLatitude,
-            longitude: userLongitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-        };
-    }
-
-    const minLat = Math.min(userLatitude, destinationLatitude);
-    const maxLat = Math.max(userLatitude, destinationLatitude);
-    const minLng = Math.min(userLongitude, destinationLongitude);
-    const maxLng = Math.max(userLongitude, destinationLongitude);
-
-    const latitudeDelta = (maxLat - minLat) * 1.3; // Adding some padding
-    const longitudeDelta = (maxLng - minLng) * 1.3; // Adding some padding
-
-    const latitude = (userLatitude + destinationLatitude) / 2;
-    const longitude = (userLongitude + destinationLongitude) / 2;
-
-    return {
-        latitude,
-        longitude,
-        latitudeDelta,
-        longitudeDelta,
-    };
-};
-
 export const calculateDriverTimes = async ({
-                                               markers,
-                                               userLatitude,
-                                               userLongitude,
-                                               destinationLatitude,
-                                               destinationLongitude,
-                                           }: {
-    markers: MarkerData[];
-    userLatitude: number | null;
-    userLongitude: number | null;
-    destinationLatitude: number | null;
-    destinationLongitude: number | null;
+  markers,
+  userLatitude,
+  userLongitude,
+  destinationLatitude,
+  destinationLongitude,
+}: {
+  markers: MarkerData[];
+  userLatitude: number | null;
+  userLongitude: number | null;
+  destinationLatitude: number | null;
+  destinationLongitude: number | null;
 }) => {
-    if (
-        !userLatitude ||
-        !userLongitude ||
-        !destinationLatitude ||
-        !destinationLongitude
-    )
-        return;
+  // Ensure all necessary coordinates are available
+  if (
+    !userLatitude ||
+    !userLongitude ||
+    !destinationLatitude ||
+    !destinationLongitude
+  )
+    return;
 
-    try {
-        const timesPromises = markers.map(async (marker) => {
-            const responseToUser = await fetch(
-                `https://maps.googleapis.com/maps/api/directions/json?origin=${marker.latitude},${marker.longitude}&destination=${userLatitude},${userLongitude}&key=${directionsAPI}`,
-            );
-            const dataToUser = await responseToUser.json();
-            const timeToUser = dataToUser.routes[0].legs[0].duration.value; // Time in seconds
+  try {
+    const timesPromises = markers.map(async (marker) => {
+      try {
+        // Fetch time from driver to user
+        const responseToUser = await fetch(
+          `https://maps.googleapis.com/maps/api/directions/json?origin=${marker.latitude},${marker.longitude}&destination=${userLatitude},${userLongitude}&key=${directionsAPI}`
+        );
+        const dataToUser = await responseToUser.json();
+        const timeToUser = dataToUser.routes[0]?.legs[0]?.duration?.value; // Time in seconds
 
-            const responseToDestination = await fetch(
-                `https://maps.googleapis.com/maps/api/directions/json?origin=${userLatitude},${userLongitude}&destination=${destinationLatitude},${destinationLongitude}&key=${directionsAPI}`,
-            );
-            const dataToDestination = await responseToDestination.json();
-            const timeToDestination =
-                dataToDestination.routes[0].legs[0].duration.value; // Time in seconds
+        if (!timeToUser) {
+          throw new Error(`Failed to get time from driver to user for marker ${marker.id}`);
+        }
 
-            const totalTime = (timeToUser + timeToDestination) / 60; // Total time in minutes
-            const price = (totalTime * 0.5).toFixed(2); // Calculate price based on time
+        // Fetch time from user to destination
+        const responseToDestination = await fetch(
+          `https://maps.googleapis.com/maps/api/directions/json?origin=${userLatitude},${userLongitude}&destination=${destinationLatitude},${destinationLongitude}&key=${directionsAPI}`
+        );
+        const dataToDestination = await responseToDestination.json();
+        const timeToDestination = dataToDestination.routes[0]?.legs[0]?.duration?.value; // Time in seconds
 
-            return {...marker, time: totalTime, price};
-        });
+        if (!timeToDestination) {
+          throw new Error(
+            `Failed to get time from user to destination for marker ${marker.id}`
+          );
+        }
 
-        return await Promise.all(timesPromises);
-    } catch (error) {
-        console.error("Error calculating driver times:", error);
-    }
+        // Calculate total time and price
+        const totalTime = (timeToUser + timeToDestination) / 60; // Time in minutes
+        const price = (totalTime * 0.5).toFixed(2); // Price calculation
+
+        // Return marker data with calculated time and price
+        return { ...marker, time: totalTime, price };
+      } catch (error) {
+        console.error(`Error processing marker ${marker.id}:`, error);
+        return { ...marker, time: null, price: null }; // Return marker with null time/price in case of error
+      }
+    });
+
+    // Wait for all marker times to be processed
+    return await Promise.all(timesPromises);
+  } catch (error) {
+    console.error("Error calculating driver times:", error);
+  }
 };
+
+
+
+export const calculateRegion = ({
+  userLatitude,
+  userLongitude,
+  destinationLatitude,
+  destinationLongitude,
+}: {
+  userLatitude: number | null;
+  userLongitude: number | null;
+  destinationLatitude?: number | null;
+  destinationLongitude?: number | null;
+}) => {
+  if (!userLatitude || !userLongitude) {
+    return {
+      latitude: 37.78825,
+      longitude: -122.4324,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    };
+  }
+
+  if (!destinationLatitude || !destinationLongitude) {
+    return {
+      latitude: userLatitude,
+      longitude: userLongitude,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    };
+  }
+}
